@@ -1,0 +1,255 @@
+<?xml version="1.0"?>
+<!-- ============================================================
+     ros2_arm_core.xacro
+     作用：定义机械臂的全部连杆（link）与关节（joint）
+     零位：所有关节 = 0 时，机械臂竖直向上伸直
+     ============================================================ -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ros2_arm">
+
+  <!-- ================= 0. 惯量计算宏（所有连杆复用） ================= -->
+
+  <!-- 长方体惯量：x y z 为三边长度，m 为质量 -->
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
+               iyy="${m*(x*x+z*z)/12}" iyz="0"
+               izz="${m*(x*x+y*y)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- 圆柱惯量：r 半径，h 高（轴向为 z），m 质量 -->
+  <xacro:macro name="cylinder_inertia" params="m r h">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="${m*(3*r*r+h*h)/12}" ixy="0" ixz="0"
+               iyy="${m*(3*r*r+h*h)/12}" iyz="0"
+               izz="${m*r*r/2}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ================= 1. 颜色 ================= -->
+
+  <xacro:property name="col_base"  value="0.55 0.55 0.58 1.0"/>
+  <xacro:property name="col_arm"   value="0.90 0.45 0.10 1.0"/>
+  <xacro:property name="col_joint" value="0.25 0.25 0.28 1.0"/>
+
+  <!-- ================= 2. 尺寸与质量（要调参数只改这里） ================= -->
+
+  <xacro:property name="base_radius"   value="0.06"/>
+  <xacro:property name="base_height"   value="0.04"/>
+  <xacro:property name="base_mass"     value="1.0"/>
+
+  <xacro:property name="link1_radius"  value="0.045"/>
+  <xacro:property name="link1_height"  value="0.05"/>
+  <xacro:property name="link1_mass"    value="0.5"/>
+
+  <xacro:property name="link2_width"   value="0.03"/>
+  <xacro:property name="link2_length"  value="0.25"/>
+  <xacro:property name="link2_mass"    value="0.4"/>
+
+  <xacro:property name="link3_width"   value="0.025"/>
+  <xacro:property name="link3_length"  value="0.22"/>
+  <xacro:property name="link3_mass"    value="0.3"/>
+
+  <xacro:property name="grip_x"        value="0.05"/>
+  <xacro:property name="grip_y"        value="0.05"/>
+  <xacro:property name="grip_z"        value="0.02"/>
+  <xacro:property name="grip_mass"     value="0.15"/>
+  <xacro:property name="finger_size"   value="0.012"/>
+  <xacro:property name="finger_len"    value="0.04"/>
+  <xacro:property name="finger_mass"   value="0.02"/>
+
+ <!-- ================= 3. 世界链接 + 底座（把机械臂钉在地面上） ================= -->
+
+  <link name="world"/>
+
+  <joint name="world_base_joint" type="fixed">
+    <parent link="world"/>
+    <child  link="base_link"/>
+  </joint>
+
+  <link name="base_link">
+    <xacro:cylinder_inertia m="${base_mass}" r="${base_radius}" h="${base_height}"/>
+    <visual>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${base_radius}" length="${base_height}"/>
+      </geometry>
+      <material name="col_base"><color rgba="${col_base}"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${base_radius}" length="${base_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================= 4. 关节 1：底座旋转（绕 Z 轴） ================= -->
+
+  <joint name="base_joint" type="revolute">
+    <parent link="base_link"/>
+    <child  link="link1"/>
+    <origin xyz="0 0 ${base_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="10.0" velocity="1.5"/>
+  </joint>
+
+  <link name="link1">
+    <xacro:cylinder_inertia m="${link1_mass}" r="${link1_radius}" h="${link1_height}"/>
+    <visual>
+      <origin xyz="0 0 ${link1_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${link1_radius}" length="${link1_height}"/>
+      </geometry>
+      <material name="col_joint"><color rgba="${col_joint}"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link1_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${link1_radius}" length="${link1_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================= 5. 关节 2：肩关节（绕 Y 轴） ================= -->
+
+  <joint name="shoulder_joint" type="revolute">
+    <parent link="link1"/>
+    <child  link="link2"/>
+    <origin xyz="0 0 ${link1_height}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.5708" upper="1.5708" effort="10.0" velocity="1.5"/>
+  </joint>
+
+  <link name="link2">
+    <xacro:box_inertia m="${link2_mass}" x="${link2_width}" y="${link2_width}" z="${link2_length}"/>
+    <visual>
+      <origin xyz="0 0 ${link2_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${link2_width} ${link2_width} ${link2_length}"/>
+      </geometry>
+      <material name="col_arm"><color rgba="${col_arm}"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link2_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${link2_width} ${link2_width} ${link2_length}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================= 6. 关节 3：肘关节（绕 Y 轴） ================= -->
+
+  <joint name="elbow_joint" type="revolute">
+    <parent link="link2"/>
+    <child  link="link3"/>
+    <origin xyz="0 0 ${link2_length}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.0" upper="2.0" effort="10.0" velocity="1.5"/>
+  </joint>
+
+  <link name="link3">
+    <xacro:box_inertia m="${link3_mass}" x="${link3_width}" y="${link3_width}" z="${link3_length}"/>
+    <visual>
+      <origin xyz="0 0 ${link3_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${link3_width} ${link3_width} ${link3_length}"/>
+      </geometry>
+      <material name="col_arm"><color rgba="${col_arm}"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link3_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${link3_width} ${link3_width} ${link3_length}"/>
+      </geometry>
+    </collision>
+  </link>
+
+ <joint name="gripper_joint" type="fixed">
+    <parent link="link3"/>
+    <child  link="gripper_base"/>
+    <origin xyz="0 0 ${link3_length}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="gripper_base">
+    <xacro:box_inertia m="${grip_mass}" x="${grip_x}" y="${grip_y}" z="${grip_z}"/>
+    <visual>
+      <origin xyz="0 0 ${grip_z/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${grip_x} ${grip_y} ${grip_z}"/>
+      </geometry>
+      <material name="col_joint"><color rgba="${col_joint}"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${grip_z/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${grip_x} ${grip_y} ${grip_z}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- 右指（主动）：绕 X 轴旋转，指在 YZ 平面内摆动。
+       角度为负时指尖向 +Y 偏 → 向对侧靠拢 = "闭合"；0.0 即"张开到竖直"。
+       关键：关节轴放在指的根部、指沿 +Z 伸出，
+       所以 0 位时重力矩为 0，不会像平移关节那样被沿运动方向的重力分量顶住。 -->
+  <joint name="finger_right_joint" type="revolute">
+    <parent link="gripper_base"/>
+    <child  link="finger_right"/>
+    <origin xyz="0 ${-grip_y/2 + finger_size/2} ${grip_z}" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.4" upper="0.0" effort="1000.0" velocity="1.0"/>
+  </joint>
+
+  <link name="finger_right">
+    <xacro:box_inertia m="${finger_mass}" x="${finger_size}" y="${finger_size}" z="${finger_len}"/>
+    <visual>
+      <origin xyz="0 0 ${finger_len/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${finger_size} ${finger_size} ${finger_len}"/>
+      </geometry>
+      <material name="col_base"><color rgba="${col_base}"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${finger_len/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${finger_size} ${finger_size} ${finger_len}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- 左指（从动）：mimic 右指、乘 -1，两指对称开合。
+       它不需要控制器去驱动 —— 硬件层会自动让它跟随右指。 -->
+  <joint name="finger_left_joint" type="revolute">
+    <parent link="gripper_base"/>
+    <child  link="finger_left"/>
+    <origin xyz="0 ${grip_y/2 - finger_size/2} ${grip_z}" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="0.4" effort="1000.0" velocity="1.0"/>
+    <mimic joint="finger_right_joint" multiplier="-1" offset="0"/>
+  </joint>
+
+  <link name="finger_left">
+    <xacro:box_inertia m="${finger_mass}" x="${finger_size}" y="${finger_size}" z="${finger_len}"/>
+    <visual>
+      <origin xyz="0 0 ${finger_len/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${finger_size} ${finger_size} ${finger_len}"/>
+      </geometry>
+      <material name="col_base"><color rgba="${col_base}"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${finger_len/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${finger_size} ${finger_size} ${finger_len}"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+
+  
+</robot>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!-- 用途：Gazebo 仿真（含 ros2_control 硬件接口与插件） -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ros2_arm">
+
+  <!-- 1. 引入零件库 -->
+  <xacro:include filename="$(find ros2_arm_description)/urdf/ros2_arm_core.xacro"/>
+  <!-- 2. 引入 ros2_control 接口声明（第 06 章写的文件） -->
+  <xacro:include filename="$(find ros2_arm_description)/urdf/ros2_arm.ros2_control.xacro"/>
+
+  <!-- 3. 声明硬件接口：仿真时插 ign_ros2_control 插件 -->
+  <xacro:ros2_arm_ros2_control name="Ros2ArmSystem" plugin_name="ign_ros2_control/IgnitionSystem"/>
+
+  <!-- 4. 让 Gazebo 加载 ros2_control 插件（controller_manager 由此诞生） -->
+  <gazebo>
+    <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+      <parameters>$(find ros2_arm_bringup)/config/ros2_arm_controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+</robot>
+

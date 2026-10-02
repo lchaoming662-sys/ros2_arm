@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>ros2_arm_description</name>
+  <version>0.1.0</version>
+  <description>ros2_arm 的模型描述文件（URDF / Xacro）</description>
+  <maintainer email="you@example.com">your_name</maintainer>
+  <license>MIT</license>
+
+  <!-- 编译工具：C++ 包一律依赖 ament_cmake；纯 Python 包用 ament_python -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- 运行时需要的包：显示模型要它们 -->
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
+
+

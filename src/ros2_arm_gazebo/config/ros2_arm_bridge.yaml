@@ -1,0 +1,13 @@
+# ============================================================
+# ros2_arm_bridge.yaml
+# 由 parameter_bridge 读取：定义"哪些 gz 话题 ↔ 哪些 ROS 话题"
+# ============================================================
+
+# 仿真时钟：Gazebo 的时间基准，所有开了 use_sim_time 的节点都要它
+- ros_topic_name: "clock"
+  gz_topic_name: "clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+  

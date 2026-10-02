@@ -1,0 +1,38 @@
+# ============================================================
+# ros2_arm_controllers.yaml
+# 由 controller_manager 读取（路径写在 ros2_arm_gz.urdf.xacro 里）
+# ============================================================
+controller_manager:
+  ros__parameters:
+    update_rate: 100          # 控制频率 100 Hz（每 10 ms 下发一次指令）
+
+    # ---- 声明三个控制器（这里只声明"有哪些"，参数在下面分开写） ----
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    ros2_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    finger_controller:
+      type: position_controllers/GripperActionController
+
+# ---- 控制器 1：机械臂轨迹控制器 ----
+ros2_arm_controller:
+  ros__parameters:
+    joints:                   # 顺序可以任意，但名字必须与 URDF 完全一致
+      - base_joint
+      - shoulder_joint
+      - elbow_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    allow_nonzero_velocity_at_trajectory_end: false   # 轨迹终点速度归零，避免抖动
+
+# ---- 控制器 2：夹爪（只控主动指，从动指由 mimic 自动跟随）----
+finger_controller:
+  ros__parameters:
+    joint: finger_right_joint
+
+    

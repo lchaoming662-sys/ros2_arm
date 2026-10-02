@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!-- 用途：在 RViz 里查看模型（不涉及仿真与控制） -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ros2_arm">
+  <xacro:include filename="$(find ros2_arm_description)/urdf/ros2_arm_core.xacro"/>
+</robot>
+
